@@ -59,6 +59,30 @@ L'évaluation de votre travail sera effectuée selon les critères suivants :
 
 La livraison de votre travail s'effectue à l'aide d'une pull-request sur le repository https://github.com/nosql-bootcamp/oracle-of-bacon.
 
-<span style="color:red; font-size: 2em;">
 **Vous devez commencer par forker le repository https://github.com/nosql-bootcamp/oracle-of-bacon**
-</span>
+
+:warning: Si vous êtes sur Windows, il peut y avoir des problèmes au lancement du `frontend`. Si cela se produit, il faut désactiver `eslint`. Pour cela, dans le fichier `oracle-of-bacon-frontend/build/webpack.base.conf.js`, il faut supprimer 
+ * les lignes 36 à 49
+ ```
+ preLoaders: [
+      {
+        test: /\.vue$/,
+        loader: 'eslint',
+        include: projectRoot,
+        exclude: /node_modules/
+      },
+      {
+        test: /\.js$/,
+        loader: 'eslint',
+        include: projectRoot,
+        exclude: /node_modules/
+      }
+    ],
+ ```
+  * les lignes 83 à 85
+  ```
+  eslint: {
+    formatter: require('eslint-friendly-formatter')
+  },
+  ```
+
