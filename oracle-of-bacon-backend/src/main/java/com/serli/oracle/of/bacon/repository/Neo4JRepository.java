@@ -5,8 +5,19 @@ import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.StatementResult;
+import org.neo4j.driver.v1.Transaction;
+import org.neo4j.driver.v1.Value;
+import org.neo4j.driver.v1.types.Node;
+import org.neo4j.driver.v1.types.Path;
+import org.neo4j.driver.v1.types.Relationship;
+import static org.neo4j.driver.v1.Values.parameters;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class Neo4JRepository {
     private final Driver driver;
@@ -18,8 +29,48 @@ public class Neo4JRepository {
     public List<?> getConnectionsToKevinBacon(String actorName) {
         Session session = driver.session();
 
-        // TODO implement Oracle of Bacon
-        return null;
+        Transaction transaction = session.beginTransaction();
+        StatementResult result = transaction.run(
+            "MATCH (bc:Actors {name: 'Bacon, Kevin (I)'}), (ran:Actors {name: {actorName}}), p = shortestPath((bc)-[:PLAYED_IN*]-(ran)) WITH p WHERE length(p) > 1 RETURN p", 
+            parameters("actorName", actorName)
+        );
+
+        return result
+                .list()
+                .stream()
+                .flatMap(record -> record.values().stream().map(Value::asPath))
+                .flatMap(p -> toGraphItems(p).stream())
+                .collect(Collectors.toList());
+    }
+
+    private List<GraphItem> toGraphItems(Path path) {
+        List<GraphItem> graphItems = toGraphItem(path.nodes(), this::toGraphItem);
+        graphItems.addAll(toGraphItem(path.relationships(), this::toGraphItem));
+
+        return graphItems;
+    }
+
+    private <T> List<GraphItem> toGraphItem(
+            Iterable<T> iterable,
+            Function<T, GraphItem> toGraphItem) {
+
+        return StreamSupport
+                .stream(iterable.spliterator(), false)
+                .map(toGraphItem)
+                .collect(Collectors.toList());
+    }
+
+    private GraphItem toGraphItem(Node n) {
+        String type = n.labels().iterator().next();
+        String property = type.equals("Actors") ? "name" : "title";
+
+        return new GraphNode(n.id(), n.get(property).asString(), type);
+    }
+
+    private GraphItem toGraphItem(Relationship relationship) {
+        return new GraphEdge(
+               relationship.id(), relationship.startNodeId(), relationship.endNodeId(), relationship.type()
+        );
     }
 
     public static abstract class GraphItem {
