@@ -26,7 +26,7 @@ public class Neo4JRepository {
         this.driver = GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic("neo4j", "password"));
     }
 
-    public List<?> getConnectionsToKevinBacon(String actorName) {
+    public List<GraphItem> getConnectionsToKevinBacon(String actorName) {
         Session session = driver.session();
 
         Transaction transaction = session.beginTransaction();
