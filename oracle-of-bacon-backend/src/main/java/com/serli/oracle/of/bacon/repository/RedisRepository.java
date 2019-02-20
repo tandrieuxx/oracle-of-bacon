@@ -10,9 +10,14 @@ public class RedisRepository {
     public RedisRepository() {
         this.jedis = new Jedis("localhost");
     }
+    private final String searchesKey = "bacon_search";
 
     public List<String> getLastTenSearches() {
-        // TODO implement last 10 searchs
-        return null;
+        return jedis.lrange(searchesKey, 0, -1);
+    }
+
+    public void addSearch(String search) {
+        jedis.lpush(searchesKey, search);
+        jedis.ltrim(searchesKey, 0, 9);
     }
 }
